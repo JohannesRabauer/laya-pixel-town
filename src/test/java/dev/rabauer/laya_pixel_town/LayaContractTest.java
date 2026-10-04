@@ -1,6 +1,7 @@
 package dev.rabauer.laya_pixel_town;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -8,13 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-/** Runs against a real laya-serve; skipped when none is reachable. Set LAYA_URL to choose the server. */
+/** Runs every client implementation against a real laya-serve; skipped when none is reachable. Set LAYA_URL to choose the server. */
 class LayaContractTest {
     private static final String URL = System.getenv().getOrDefault("LAYA_URL", "http://localhost:8003");
 
-    @Test
-    void batchReturnsOneAnswerPerStateInOrder() throws Exception {
-        LayaClient laya = new LayaClient(URL);
+    @ParameterizedTest
+    @ValueSource(strings = {"native", "langchain4j", "spring-ai"})
+    void batchReturnsOneAnswerPerStateInOrder(String client) throws Exception {
+        LayaClient laya = LayaClients.create(client, URL);
         assumeTrue(laya.check() == null, "laya-serve not reachable at " + URL);
 
         List<String> states = List.of(

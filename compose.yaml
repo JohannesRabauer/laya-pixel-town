@@ -59,6 +59,7 @@ services:
         condition: service_healthy
     environment:
       PIXELTOWN_LAYA_DEFAULT_URL: "http://laya-serve:8002"
+      PIXELTOWN_LAYA_CLIENT: "${PIXELTOWN_LAYA_CLIENT:-native}"
     ports:
       - "127.0.0.1:${APP_PORT:-8765}:8765"
     restart: unless-stopped

@@ -74,11 +74,11 @@ function toScreen(tx, ty) { return [panX + tx * T * zoom, panY + ty * T * zoom];
 // ---------- people ----------
 function syncPeople(list) {
   if (people.length !== list.length) {
-    people = list.map(p => ({id: p[0], x: p[1], y: p[2], tx: p[1], ty: p[2], act: p[3], inside: p[4] === 1, moving: false,
+    people = list.map(p => ({id: p[0], x: p[1], y: p[2], tx: p[1], ty: p[2], act: p[3], inside: p[4] === 1, talking: p[5] === 1, moving: false,
       skin: SKIN[p[0] % 4], cloth: CLOTH[(p[0] * 7) % 8], hair: HAIR[(p[0] * 3) % 4]}));
     return;
   }
-  list.forEach((p, i) => { const q = people[i]; q.tx = p[1]; q.ty = p[2]; q.act = p[3]; q.inside = p[4] === 1; });
+  list.forEach((p, i) => { const q = people[i]; q.tx = p[1]; q.ty = p[2]; q.act = p[3]; q.inside = p[4] === 1; q.talking = p[5] === 1; });
 }
 
 function nightAlpha(minute) {
@@ -101,6 +101,22 @@ function drawPerson(q, t) {
   r(2, 16, 3, step ? 3 : 4, '#3A3F55'); r(7, 16, 3, step ? 4 : 3, '#3A3F55');
 }
 
+const WORDS = ['Hi!', 'Hmm', 'Haha', 'Really?', 'Oh?', 'Nice!', 'So...', 'Yes!', 'Wow', 'Right'];
+function drawBubble(q, t) {
+  const slot = Math.floor(t / 1600);
+  if ((slot + q.id) % 2) return;                       // chat partners take turns
+  const word = WORDS[(slot * 7 + q.id * 3) % WORDS.length];
+  const [sx, sy] = toScreen(q.x, q.y);
+  const k = zoom, fs = Math.max(8, Math.round(5 * k));
+  ctx.font = 'bold ' + fs + 'px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = Math.round(ctx.measureText(word).width + 6 * k), h = Math.round(fs + 5 * k), x = Math.round(sx - w / 2), y = Math.round(sy - 22 * k - h);
+  ctx.fillStyle = '#14161F'; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+  ctx.fillStyle = '#F4F4F8'; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#14161F'; ctx.fillRect(Math.round(sx - 1.5 * k), y + h + 1, Math.round(3 * k), Math.round(2 * k));
+  ctx.fillStyle = '#F4F4F8'; ctx.fillRect(Math.round(sx - 1 * k), y + h, Math.round(2 * k), Math.round(2 * k));
+  ctx.fillStyle = '#14161F'; ctx.fillText(word, Math.round(sx), y + h / 2 + 1);
+}
+
 function draw(t) {
   requestAnimationFrame(draw);
   ctx.imageSmoothingEnabled = false;
@@ -115,16 +131,17 @@ function draw(t) {
     // the night tint covers the people too; light sources are added on top of it
     ctx.fillStyle = 'rgba(27,35,71,' + na + ')'; ctx.fillRect(panX, panY, base.width * zoom, base.height * zoom);
     const glow = na / 0.55, prev = ctx.globalCompositeOperation;
-    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalCompositeOperation = 'screen';   // screen, not additive: overlapping glows saturate instead of washing out the scene
     const spot = (sx, sy, rad, a) => {
       const gr = ctx.createRadialGradient(sx, sy, 0, sx, sy, rad);
       gr.addColorStop(0, 'rgba(255,205,120,' + a + ')'); gr.addColorStop(1, 'rgba(255,205,120,0)');
       ctx.fillStyle = gr; ctx.fillRect(sx - rad, sy - rad, rad * 2, rad * 2);
     };
-    for (const [lx, ly] of lamps) { const [sx, sy] = toScreen(lx, ly - 0.7); spot(sx, sy, 5.5 * T * zoom, 0.5 * glow); }
-    for (const q of order) { const [sx, sy] = toScreen(q.x, q.y); spot(sx, sy - 9 * zoom, 2.6 * T * zoom, 0.3 * glow); }
+    for (const [lx, ly] of lamps) { const [sx, sy] = toScreen(lx, ly - 0.7); spot(sx, sy, 5.5 * T * zoom, 0.4 * glow); }
+    for (const q of order) { const [sx, sy] = toScreen(q.x, q.y); spot(sx, sy - 9 * zoom, 2 * T * zoom, 0.14 * glow); }
     ctx.globalCompositeOperation = prev;
   }
+  for (const q of order) if (q.talking) drawBubble(q, t);
   if (selected >= 0 && people[selected]) {
     const q = people[selected];
     const [sx, sy] = toScreen(q.x, q.y);

@@ -16,12 +16,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** Behaviour of the simulation around Laya, with a test double standing in for the server. */
 class WorldTest {
     /** Always answers "eat", or throws when told to. */
-    static class StubLaya extends LayaClient {
+    static class StubLaya implements LayaClient {
         final AtomicInteger calls = new AtomicInteger();
         final AtomicInteger states = new AtomicInteger();
         volatile boolean fail;
 
-        StubLaya() { super("http://stub"); }
+        @Override public String name() { return "stub"; }
+        @Override public String baseUrl() { return "http://stub"; }
+        @Override public String check() { return null; }
 
         @Override
         public BatchResult decide(List<String> batch) throws IOException {

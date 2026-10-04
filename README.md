@@ -88,8 +88,11 @@ Laya is a fast classifier, not a chatbot, and the text you send matters a lot:
 | App port on your machine | `8765` | `APP_PORT` environment variable for Compose |
 | Laya port on your machine | `8003` | `LAYA_HOST_PORT` |
 | Laya address the app uses | `http://laya-serve:8002` in Compose | Start screen field, or `PIXELTOWN_LAYA_DEFAULT_URL` |
+| How the app talks to Laya | `native` | `pixeltown.laya.client` or `PIXELTOWN_LAYA_CLIENT`: `native`, `langchain4j` or `spring-ai` |
 | Laya device | `cuda` | `LAYA_DEVICE` (the CPU override sets `cpu`) |
 | PyTorch build for Laya | `cu130`, `2.14.0` | `LAYA_TORCH_INDEX`, `LAYA_TORCH_VERSION` |
+
+The three clients make the same decisions. `native` uses the JDK HttpClient and Laya's batch endpoint, so a whole batch is one call. `langchain4j` (`langchain4j-typesafe`) and `spring-ai` (`typesafe-java-sdk`) have no batch call, so the app sends one request per person in parallel and Laya answers them one after another; expect slower batches. Both libraries also hide Laya's `answer_confidence`, so the confidence shown for a decision is the library's own.
 
 The start screen also sets the population, how often (in simulated minutes) people reconsider, and a random seed for repeatable towns.
 
@@ -109,7 +112,7 @@ java -jar target/laya-pixel-town-0.1.0-SNAPSHOT.jar --pixeltown.laya.default-url
   - pause freezes time and stops calls;
   - Step advances one step;
   - a failing Laya leaves everyone doing what they were doing.
-- **`LayaContractTest`** sends a real batch to Laya at `LAYA_URL` (default `http://localhost:8003`). It is skipped when no Laya server is reachable.
+- **`LayaContractTest`** sends a real batch through each of the three clients to Laya at `LAYA_URL` (default `http://localhost:8003`). It is skipped when no Laya server is reachable.
 
 ### Project layout
 
@@ -120,7 +123,11 @@ src/main/java/dev/rabauer/laya_pixel_town/
   World.java                     simulation, decision queue, state text
   Person.java                    needs, activity, decision history
   Town.java                      map layout and walking routes
-  LayaClient.java                HTTP client for Laya's batch endpoint
+  LayaClient.java                what the simulation needs from Laya (interface)
+  NativeLayaClient.java          JDK HttpClient, one batch call
+  LangChain4jLayaClient.java     LangChain4j TypeSafeDecisionModel, one call per person
+  SpringAiLayaClient.java        Spring AI TypeSafe SDK, one call per person
+  LayaClients.java               picks one from the pixeltown.laya.client property
 src/main/resources/static/       the web front end (canvas, no build step)
 site/                            marketing website, published to GitHub Pages
 compose.yaml, compose.cpu.yaml   one-command setup with Laya

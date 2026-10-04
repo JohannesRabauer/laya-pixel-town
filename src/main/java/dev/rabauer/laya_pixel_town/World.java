@@ -123,7 +123,18 @@ public class World {
                 p.arrived = true;
                 p.inside = p.destInside;
             }
-        } else if (p.arrived) {
+        } else if (p.arrived && p.area != null && simMinute >= p.nextStrollAt) {
+            // People who are out relaxing or chatting walk around the pond or the park instead of standing still.
+            boolean chat = p.activity == Activity.SOCIALIZE;   // chatters only shuffle around their meeting point
+            if (p.area.equals("pond")) {
+                if (chat) p.route.add(new double[]{Math.max(2, Math.min(15, p.x + (rnd.nextDouble() * 2 - 1) * 1.5)), p.y});
+                else p.route.addAll(Town.pondStroll(p.x, p.y, rnd));
+            } else {
+                p.route.add(town.parkStroll(p.x, p.y, chat ? 1.5 : 8, rnd));
+            }
+            p.nextStrollAt = simMinute + 8 + rnd.nextDouble() * 20;
+        }
+        if (p.arrived) {
             switch (p.activity) {
                 case SLEEP -> { p.energy += 0.3 * dt; p.hunger -= 0.06 * dt; }
                 case EAT -> { p.hunger -= 1.5 * dt; p.money -= 0.1 * dt; }
@@ -161,8 +172,12 @@ public class World {
         } else {
             building = false;
             pond = (a == Activity.RELAX || a == Activity.SOCIALIZE) && rnd.nextInt(3) == 0;
-            dest = a == Activity.WANDER ? town.wanderSpot(rnd) : pond ? town.pondSpot(rnd) : town.parkSpot(rnd);
+            dest = a == Activity.WANDER ? town.wanderSpot(rnd)
+                    : a == Activity.SOCIALIZE ? town.socialSpot(pond, rnd)
+                    : pond ? town.pondSpot(rnd) : town.parkSpot(rnd);
         }
+        p.area = building || a == Activity.WANDER ? null : pond ? "pond" : "park";
+        p.nextStrollAt = simMinute + rnd.nextDouble() * 10;
         String outdoors = pond ? "At the pond" : "At the park";
         p.placeLabel = switch (a) {
             case SLEEP -> "At home";
@@ -237,15 +252,38 @@ public class World {
 
     private void apply(Person p, String state, LayaClient.Answer a, LayaClient.BatchResult res, int size) {
         p.inFlight = false;
-        Decision d = new Decision(simMinute, state, a.probabilities(), a.choice(), a.answerConfidence(), res.wallMs(), size);
-        p.record(d);
         Activity chosen = Activity.of(a.choice());
+        String choice = a.choice();
+        if (chosen == p.activity && satisfied(p, chosen)) {
+            // Laya answers the same state the same way, so someone who has got all they can out of their current
+            // activity (fun at 100 while relaxing) would stay there forever. Take Laya's next-best answer instead.
+            String current = chosen.label;
+            String alt = a.probabilities().entrySet().stream()
+                    .filter(e -> !e.getKey().equals(current))
+                    .max(java.util.Map.Entry.comparingByValue()).map(java.util.Map.Entry::getKey).orElse(null);
+            if (alt != null) { choice = alt; chosen = Activity.of(alt); }
+        }
+        Decision d = new Decision(simMinute, state, a.probabilities(), choice, a.answerConfidence(), res.wallMs(), size);
+        p.record(d);
         if (chosen != p.activity) {
             p.activity = chosen;
             p.activityStartedAt = simMinute;
             sendTo(p, chosen);
         }
         p.nextDecisionAt = simMinute + decisionInterval * (0.7 + 0.6 * rnd.nextDouble());
+    }
+
+    /** True when the need this activity serves is already full, so carrying on would be pointless. */
+    private boolean satisfied(Person p, Activity a) {
+        return switch (a) {
+            case SLEEP -> p.energy >= 95 && !timePhrase(simMinute).contains("night");
+            case EAT -> p.hunger <= 5;
+            case WORK -> p.money >= 95;
+            case SOCIALIZE -> p.social >= 95;
+            case RELAX -> p.fun >= 95;
+            case SHOP -> p.money <= 5 || p.fun >= 95;
+            case WANDER -> false;
+        };
     }
 
     // ---- state text ----

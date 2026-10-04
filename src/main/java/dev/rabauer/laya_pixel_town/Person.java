@@ -52,6 +52,8 @@ public class Person {
     double activityStartedAt;
     double nextDecisionAt;
     boolean inFlight;
+    String area;                // "pond" or "park" while relaxing or socializing outdoors, otherwise null
+    double nextStrollAt;
 
     Decision lastDecision;
     final Deque<Decision> history = new ArrayDeque<>();

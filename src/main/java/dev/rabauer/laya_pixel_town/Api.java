@@ -1,6 +1,7 @@
 package dev.rabauer.laya_pixel_town;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,21 +37,26 @@ public class Api {
         return t;
     });
     private final String defaultUrl;
+    private final String clientType;
     private volatile World world;
 
-    public Api(@Value("${pixeltown.laya.default-url}") String defaultUrl) {
+    public Api(@Value("${pixeltown.laya.default-url}") String defaultUrl,
+               @Value("${pixeltown.laya.client:native}") String clientType) {
         this.defaultUrl = defaultUrl;
+        this.clientType = clientType;
+        LayaClients.create(clientType, defaultUrl);   // fail at startup, not at the first Start click, on a typo
+        LoggerFactory.getLogger(Api.class).info("Talking to Laya through the '{}' client", clientType);
         pusher.scheduleAtFixedRate(this::push, 200, 100, TimeUnit.MILLISECONDS);
     }
 
     @GetMapping("/defaults")
     public Map<String, Object> defaults() {
-        return Map.of("layaUrl", defaultUrl, "population", 100, "decisionInterval", 60, "seed", 0);
+        return Map.of("layaUrl", defaultUrl, "client", clientType, "population", 100, "decisionInterval", 60, "seed", 0);
     }
 
     @GetMapping("/check")
     public Map<String, Object> check(@RequestParam String url) {
-        String problem = new LayaClient(url).check();
+        String problem = LayaClients.create(clientType, url).check();
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("ok", problem == null);
         m.put("problem", problem);
@@ -60,7 +66,7 @@ public class Api {
     @PostMapping("/start")
     public ResponseEntity<Map<String, Object>> start(@RequestBody StartRequest req) {
         String url = req.layaUrl() == null || req.layaUrl().isBlank() ? defaultUrl : req.layaUrl().trim();
-        LayaClient client = new LayaClient(url);
+        LayaClient client = LayaClients.create(clientType, url);
         String problem = client.check();
         if (problem != null) {
             return ResponseEntity.status(503).body(Map.of("ok", false, "problem", "Laya is not reachable at " + url + "."));
@@ -176,6 +182,16 @@ public class Api {
         }
     }
 
+    /** Someone who wants company and has another such person close by is talking to them. */
+    private static boolean isChatting(Person p, List<Person> all) {
+        if (p.activity != Person.Activity.SOCIALIZE || p.inside || p.arrived == false) return false;
+        for (Person o : all) {
+            if (o != p && o.activity == Person.Activity.SOCIALIZE && !o.inside && o.arrived
+                    && Math.hypot(o.x - p.x, o.y - p.y) < 3) return true;
+        }
+        return false;
+    }
+
     private String snapshot(World w) throws IOException {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("running", true);
@@ -191,7 +207,8 @@ public class Api {
         List<double[]> ps = new ArrayList<>();
         synchronized (w.lock()) {
             for (Person p : w.people) {
-                ps.add(new double[]{p.id, Math.round(p.x * 100) / 100.0, Math.round(p.y * 100) / 100.0, p.activity.ordinal(), p.inside ? 1 : 0});
+                ps.add(new double[]{p.id, Math.round(p.x * 100) / 100.0, Math.round(p.y * 100) / 100.0, p.activity.ordinal(), p.inside ? 1 : 0,
+                        isChatting(p, w.people) ? 1 : 0});
             }
         }
         m.put("p", ps);

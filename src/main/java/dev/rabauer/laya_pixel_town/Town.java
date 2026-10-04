@@ -57,9 +57,70 @@ public final class Town {
         return new double[]{x, 33.8};
     }
 
-    /** A random spot on the grass just below the pond (top left). */
+    /** A random spot on the bottom edge of the path ring around the pond (top left). */
     public double[] pondSpot(Random rnd) {
-        return new double[]{3.5 + rnd.nextDouble() * 10, 11.6};
+        return new double[]{RING[0][0] + rnd.nextDouble() * (RING[3][0] - RING[0][0]), RING[0][1]};
+    }
+
+    // The path ring around the pond, one tile outside it: bottom left, top left, top right, bottom right.
+    private static final double[][] RING = {{2, 12}, {2, 2}, {15, 2}, {15, 12}};
+    private static final double[] RING_START = {0, 10, 23, 33};
+    private static final double RING_LENGTH = 46;
+
+    /** Waypoints for a short walk along the pond ring, in a random direction, starting from a point on it. */
+    public static List<double[]> pondStroll(double x, double y, Random rnd) {
+        double s0 = ringParam(x, y);
+        double s1 = s0 + (4 + rnd.nextDouble() * 8) * (rnd.nextBoolean() ? 1 : -1);
+        double lo = Math.min(s0, s1), hi = Math.max(s0, s1);
+        List<double[]> pts = new ArrayList<>();
+        for (int lap = -1; lap <= 2; lap++) {
+            for (int k = 0; k < 4; k++) {
+                double c = RING_START[k] + lap * RING_LENGTH;
+                if (c > lo && c < hi) pts.add(RING[k]);
+            }
+        }
+        if (s1 < s0) java.util.Collections.reverse(pts);
+        pts.add(ringPos(s1));
+        return pts;
+    }
+
+    private static double[] ringPos(double s) {
+        s = ((s % RING_LENGTH) + RING_LENGTH) % RING_LENGTH;
+        for (int k = 3; k >= 0; k--) {
+            if (s >= RING_START[k]) {
+                double[] a = RING[k], b = RING[(k + 1) % 4];
+                double len = Math.hypot(b[0] - a[0], b[1] - a[1]), t = (s - RING_START[k]) / len;
+                return new double[]{a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t};
+            }
+        }
+        return RING[0];
+    }
+
+    private static double ringParam(double x, double y) {
+        double best = Double.MAX_VALUE, bestS = 0;
+        for (int k = 0; k < 4; k++) {
+            double[] a = RING[k], b = RING[(k + 1) % 4];
+            double dx = b[0] - a[0], dy = b[1] - a[1], len2 = dx * dx + dy * dy;
+            double t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / len2));
+            double d = Math.hypot(a[0] + dx * t - x, a[1] + dy * t - y);
+            if (d < best) { best = d; bestS = RING_START[k] + t * Math.sqrt(len2); }
+        }
+        return bestS;
+    }
+
+    /** A short walk to another spot within `radius` tiles, kept inside the park that (x, y) is in. */
+    public double[] parkStroll(double x, double y, double radius, Random rnd) {
+        double lo = x < VERTICAL_LANE_X ? 4 : 46, hi = x < VERTICAL_LANE_X ? 34 : 74;
+        double nx = Math.max(lo, Math.min(hi, x + (rnd.nextDouble() * 2 - 1) * radius));
+        double ny = Math.max(34, Math.min(45, y + (rnd.nextDouble() * 2 - 1) * radius));
+        return new double[]{nx, ny};
+    }
+
+    /** Where people who want company meet: a few fixed gathering points per park and at the pond, so they end up close together. */
+    public double[] socialSpot(boolean pond, Random rnd) {
+        if (pond) return new double[]{5 + rnd.nextDouble() * 6, RING[0][1]};
+        double[] centers = {10, 22, 30, 52, 62, 70};
+        return new double[]{centers[rnd.nextInt(centers.length)] + (rnd.nextDouble() * 2 - 1) * 1.5, 35 + rnd.nextDouble() * 3};
     }
 
     /** A random spot on one of the walkways. */

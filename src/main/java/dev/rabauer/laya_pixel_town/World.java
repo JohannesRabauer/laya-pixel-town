@@ -98,7 +98,7 @@ public class World {
     private void update(Person p, double dt) {
         p.hunger += 0.12 * dt;
         p.energy -= 0.07 * dt;
-        p.social -= 0.08 * dt;
+        p.social -= 0.12 * dt;
         p.fun -= 0.08 * dt;
         p.money -= 0.02 * dt;
 
@@ -137,11 +137,17 @@ public class World {
         if (p.arrived) {
             switch (p.activity) {
                 case SLEEP -> { p.energy += 0.3 * dt; p.hunger -= 0.06 * dt; }
-                case EAT -> { p.hunger -= 1.5 * dt; p.money -= 0.1 * dt; }
+                case EAT -> {   // a meal is paid for: without money the restaurant serves nothing
+                    if (p.money > 0) { p.hunger -= 1.5 * dt; p.money -= 0.4 * dt; }
+                }
                 case WORK -> { p.money += 0.25 * dt; p.energy -= 0.05 * dt; p.fun -= 0.05 * dt; }
-                case SOCIALIZE -> { p.social += 0.8 * dt; p.fun += 0.1 * dt; }
+                case SOCIALIZE -> {   // company is what helps: alone at the meeting spot it barely does
+                    boolean company = isChatting(p, people);
+                    p.social += (company ? 0.8 : 0.25) * dt;
+                    p.fun += (company ? 0.1 : 0.03) * dt;
+                }
                 case RELAX -> { p.fun += 0.7 * dt; p.energy += 0.02 * dt; }
-                case SHOP -> { p.money -= 0.4 * dt; p.fun += 0.3 * dt; }
+                case SHOP -> { if (p.money > 0) { p.money -= 0.4 * dt; p.fun += 0.3 * dt; } }
                 case WANDER -> { p.fun += 0.2 * dt; p.energy -= 0.03 * dt; }
             }
         }
@@ -265,19 +271,34 @@ public class World {
         }
         Decision d = new Decision(simMinute, state, a.probabilities(), choice, a.answerConfidence(), res.wallMs(), size);
         p.record(d);
-        if (chosen != p.activity) {
+        boolean sameActivity = chosen == p.activity;
+        // Answering "relax", "socialize" or "wander" again once there is not "stay put": it picks a new home, park or
+        // pond spot, otherwise everyone Laya keeps telling to relax would stay in the house they started in.
+        // Someone still walking to the last spot is left alone, the trips are long.
+        boolean roams = p.arrived && (chosen == Activity.RELAX || chosen == Activity.SOCIALIZE || chosen == Activity.WANDER);
+        if (!sameActivity || roams) {
+            if (!sameActivity) p.activityStartedAt = simMinute;
             p.activity = chosen;
-            p.activityStartedAt = simMinute;
             sendTo(p, chosen);
         }
         p.nextDecisionAt = simMinute + decisionInterval * (0.7 + 0.6 * rnd.nextDouble());
+    }
+
+    /** Someone who wants company and has another such person close by is talking to them. */
+    static boolean isChatting(Person p, List<Person> all) {
+        if (p.activity != Activity.SOCIALIZE || p.inside || !p.arrived) return false;
+        for (Person o : all) {
+            if (o != p && o.activity == Activity.SOCIALIZE && !o.inside && o.arrived
+                    && Math.hypot(o.x - p.x, o.y - p.y) < 4) return true;
+        }
+        return false;
     }
 
     /** True when the need this activity serves is already full, so carrying on would be pointless. */
     private boolean satisfied(Person p, Activity a) {
         return switch (a) {
             case SLEEP -> p.energy >= 95 && !timePhrase(simMinute).contains("night");
-            case EAT -> p.hunger <= 5;
+            case EAT -> p.hunger <= 5 || p.money <= 0;
             case WORK -> p.money >= 95;
             case SOCIALIZE -> p.social >= 95;
             case RELAX -> p.fun >= 95;

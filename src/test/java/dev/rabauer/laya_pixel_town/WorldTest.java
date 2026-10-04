@@ -20,6 +20,7 @@ class WorldTest {
         final AtomicInteger calls = new AtomicInteger();
         final AtomicInteger states = new AtomicInteger();
         volatile boolean fail;
+        volatile String choice = "eat";
 
         @Override public String name() { return "stub"; }
         @Override public String baseUrl() { return "http://stub"; }
@@ -33,8 +34,8 @@ class WorldTest {
             List<Answer> out = new ArrayList<>();
             for (int i = 0; i < batch.size(); i++) {
                 Map<String, Double> p = new LinkedHashMap<>();
-                for (Person.Activity a : Person.Activity.values()) p.put(a.label, a == Person.Activity.EAT ? 0.9 : 0.1 / 6);
-                out.add(new Answer("eat", p, 0.9));
+                for (Person.Activity a : Person.Activity.values()) p.put(a.label, a.label.equals(choice) ? 0.9 : 0.1 / 6);
+                out.add(new Answer(choice, p, 0.9));
             }
             return new BatchResult(out, 5);
         }
@@ -66,6 +67,44 @@ class WorldTest {
         world = new World(10, 60, 1, laya);
         await(() -> world.people.stream().allMatch(p -> p.lastDecision != null), 5000);
         assertTrue(world.people.stream().allMatch(p -> p.activity == Person.Activity.EAT));
+    }
+
+    @Test
+    void relaxingOutdoorsPeopleWalkAroundThePondAndPark() throws Exception {
+        socializersOrRelaxers("relax", 10, 0);
+    }
+
+    @Test
+    void socializersMeetOutsideStrollAndChat() throws Exception {
+        socializersOrRelaxers("socialize", 5, 10);
+    }
+
+    private void socializersOrRelaxers(String choice, int minMoved, int minChatting) throws Exception {
+        StubLaya laya = new StubLaya();
+        laya.choice = choice;
+        world = new World(60, 100_000, 1, laya);   // one decision each, then they keep doing it
+        world.speed(5);
+        java.util.function.Supplier<List<Person>> out = () -> {
+            synchronized (world.lock()) {
+                return world.people.stream().filter(p -> !p.inside && p.arrived && p.area != null).toList();
+            }
+        };
+        int want = choice.equals("relax") ? 12 : 30;
+        await(() -> out.get().size() >= want, 30_000);
+        assertTrue(out.get().size() >= want, "most people should have reached a park or the pond");
+        Map<Integer, double[]> before = new LinkedHashMap<>();
+        synchronized (world.lock()) { out.get().forEach(p -> before.put(p.id, new double[]{p.x, p.y})); }
+        Thread.sleep(3000);
+        int moved = 0, chatting = 0;
+        synchronized (world.lock()) {
+            for (Person p : world.people) {
+                double[] b = before.get(p.id);
+                if (b != null && Math.hypot(p.x - b[0], p.y - b[1]) > 0.05) moved++;
+                if (World.isChatting(p, world.people)) chatting++;
+            }
+        }
+        assertTrue(moved >= minMoved, "people walk around, moved: " + moved);
+        assertTrue(chatting >= minChatting, "people near each other chat, chatting: " + chatting);
     }
 
     @Test

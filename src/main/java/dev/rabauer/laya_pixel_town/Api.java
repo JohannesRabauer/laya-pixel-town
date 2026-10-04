@@ -182,16 +182,6 @@ public class Api {
         }
     }
 
-    /** Someone who wants company and has another such person close by is talking to them. */
-    private static boolean isChatting(Person p, List<Person> all) {
-        if (p.activity != Person.Activity.SOCIALIZE || p.inside || p.arrived == false) return false;
-        for (Person o : all) {
-            if (o != p && o.activity == Person.Activity.SOCIALIZE && !o.inside && o.arrived
-                    && Math.hypot(o.x - p.x, o.y - p.y) < 3) return true;
-        }
-        return false;
-    }
-
     private String snapshot(World w) throws IOException {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("running", true);
@@ -208,7 +198,7 @@ public class Api {
         synchronized (w.lock()) {
             for (Person p : w.people) {
                 ps.add(new double[]{p.id, Math.round(p.x * 100) / 100.0, Math.round(p.y * 100) / 100.0, p.activity.ordinal(), p.inside ? 1 : 0,
-                        isChatting(p, w.people) ? 1 : 0});
+                        World.isChatting(p, w.people) ? 1 : 0});
             }
         }
         m.put("p", ps);

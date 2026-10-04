@@ -137,8 +137,15 @@ function draw(t) {
       gr.addColorStop(0, 'rgba(255,205,120,' + a + ')'); gr.addColorStop(1, 'rgba(255,205,120,0)');
       ctx.fillStyle = gr; ctx.fillRect(sx - rad, sy - rad, rad * 2, rad * 2);
     };
-    for (const [lx, ly] of lamps) { const [sx, sy] = toScreen(lx, ly - 0.7); spot(sx, sy, 5.5 * T * zoom, 0.4 * glow); }
-    for (const q of order) { const [sx, sy] = toScreen(q.x, q.y); spot(sx, sy - 9 * zoom, 2 * T * zoom, 0.14 * glow); }
+    for (const [lx, ly] of lamps) { const [sx, sy] = toScreen(lx, ly - 0.7); spot(sx, sy, 5 * T * zoom, 0.3 * glow); }
+    // one small glow per spot: a crowd standing together must not add up to a white blob
+    const lit = new Set();
+    for (const q of order) {
+      const key = Math.round(q.x * 1.5) + ',' + Math.round(q.y * 1.5);
+      if (lit.has(key)) continue;
+      lit.add(key);
+      const [sx, sy] = toScreen(q.x, q.y); spot(sx, sy - 9 * zoom, 1.5 * T * zoom, 0.07 * glow);
+    }
     ctx.globalCompositeOperation = prev;
   }
   for (const q of order) if (q.talking) drawBubble(q, t);

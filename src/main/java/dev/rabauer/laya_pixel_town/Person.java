@@ -12,8 +12,8 @@ public class Person {
         SLEEP("sleep", "go to bed and sleep because they are tired, and always when it is night"),
         EAT("eat", "eat a meal because they are hungry"),
         WORK("work", "go to work to earn money"),
-        SOCIALIZE("socialize", "meet friends in the park or at the pond because they are lonely"),
-        RELAX("relax", "relax and have fun because they are bored"),
+        SOCIALIZE("socialize", "spend time with other people because they feel lonely"),
+        RELAX("relax", "relax alone and have fun because they are bored"),
         SHOP("shop", "go shopping and spend some of their money on something nice"),
         WANDER("wander", "stroll around aimlessly");
 

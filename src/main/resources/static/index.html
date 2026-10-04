@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pixel Town</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="town" aria-label="Pixel town"></canvas>
+
+<header id="top" hidden>
+  <b class="pix title">Pixel Town</b>
+  <button id="btn-pause" class="btn primary">Pause</button>
+  <button id="btn-step" class="btn" disabled>Step</button>
+  <span class="muted">Speed</span>
+  <button class="btn speed primary" data-speed="1">1&times;</button>
+  <button class="btn speed" data-speed="2">2&times;</button>
+  <button class="btn speed" data-speed="5">5&times;</button>
+  <span id="clock" class="mono"></span>
+  <span id="pop" class="muted"></span>
+  <span id="hint" class="muted"></span>
+  <span id="msg" class="warn"></span>
+  <div class="sp"></div>
+  <div class="tile"><b id="m-dps" class="pix">0</b><i>decisions / s</i></div>
+  <div class="tile"><b id="m-batch" class="pix">&ndash;</b><i>batch size</i></div>
+  <div class="tile"><b id="m-ms" class="pix">&ndash;</b><i>last batch</i></div>
+  <button id="btn-new" class="btn">New town</button>
+</header>
+
+<aside id="inspector" class="panel" hidden aria-live="polite">
+  <div class="row between"><h2 id="i-name" class="pix">&nbsp;</h2><button id="i-close" class="btn" aria-label="Close inspector">&times;</button></div>
+  <div id="i-place" class="muted"></div>
+  <hr>
+  <h3 class="pix">Needs</h3>
+  <div id="i-needs"></div>
+  <hr>
+  <h3 class="pix amber">Last decision</h3>
+  <div id="i-decision"><span class="muted">No decision yet.</span></div>
+  <hr>
+  <h3 class="pix">History</h3>
+  <div id="i-history" class="hist"></div>
+</aside>
+
+<div id="hover" class="hover" hidden></div>
+
+<section id="start" class="panel">
+  <h1 class="pix">Pixel Town</h1>
+  <p class="muted">A town where every decision is made by Laya.</p>
+  <label class="muted" for="f-pop">Population <span id="f-pop-v" class="mono lite">100</span></label>
+  <input id="f-pop" type="range" min="10" max="300" step="10" value="100">
+  <label class="muted" for="f-int">Decision interval (simulated minutes)</label>
+  <input id="f-int" class="field mono" type="number" min="5" step="5" value="60">
+  <label class="muted" for="f-seed">Random seed (0 = random)</label>
+  <input id="f-seed" class="field mono" type="number" value="0">
+  <label class="muted" for="f-url">Laya server address</label>
+  <input id="f-url" class="field mono" type="text" value="http://localhost:8002">
+  <div id="f-status" class="mono muted">Checking Laya&hellip;</div>
+  <div class="row">
+    <button id="f-start" class="btn primary big" disabled>Start</button>
+    <button id="f-check" class="btn">Check again</button>
+  </div>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>

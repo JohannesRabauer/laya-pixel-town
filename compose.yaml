@@ -1,0 +1,65 @@
+# Pixel Town + Laya, one command:
+#
+#   docker compose up --build
+#
+# then open http://localhost:8765
+#
+# Defaults to an NVIDIA GPU (Docker needs the NVIDIA container runtime and a driver that supports CUDA 13).
+# No GPU? Use the CPU override. It works, but a 64-person batch takes about 45 s instead of about 3 s:
+#
+#   docker compose -f compose.yaml -f compose.cpu.yaml up --build
+#
+# Laya is built from its upstream repository at the commit this project was tested against.
+# The first start downloads the model weights (cached in the laya-model-cache volume).
+
+services:
+  laya-serve:
+    build:
+      context: https://github.com/NandhaKishorM/laya.git#2e4d9c87e8b1621deb344eac7de5c7258f32f849
+      args:
+        TORCH_INDEX: "${LAYA_TORCH_INDEX:-cu130}"
+        TORCH_VERSION: "${LAYA_TORCH_VERSION:-2.14.0}"
+    command: ["laya-serve"]
+    environment:
+      LAYA_HOST: "0.0.0.0"
+      LAYA_PORT: "8002"
+      LAYA_DEVICE: "${LAYA_DEVICE:-cuda}"
+      LAYA_MODELS: "english"
+      LAYA_PRELOAD: "1"
+      LAYA_THREADS: "4"
+      OMP_NUM_THREADS: "4"
+    ports:
+      # Optional, for poking at Laya directly: curl localhost:8003/health
+      - "127.0.0.1:${LAYA_HOST_PORT:-8003}:8002"
+    volumes:
+      - laya-model-cache:/home/laya/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10m
+      start_interval: 2s
+
+  pixel-town:
+    build: .
+    depends_on:
+      laya-serve:
+        condition: service_healthy
+    environment:
+      PIXELTOWN_LAYA_DEFAULT_URL: "http://laya-serve:8002"
+    ports:
+      - "127.0.0.1:${APP_PORT:-8765}:8765"
+    restart: unless-stopped
+
+volumes:
+  laya-model-cache:

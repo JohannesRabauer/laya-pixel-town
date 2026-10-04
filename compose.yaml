@@ -12,6 +12,8 @@
 # Laya is built from its upstream repository at the commit this project was tested against.
 # The first start downloads the model weights (cached in the laya-model-cache volume).
 
+name: laya-pixel-town
+
 services:
   laya-serve:
     build:

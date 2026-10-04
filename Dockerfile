@@ -10,8 +10,8 @@ FROM eclipse-temurin:17-jre
 RUN useradd --uid 10002 --create-home pixeltown
 USER pixeltown
 WORKDIR /app
-COPY --from=build /src/target/pixel-town-*.jar /app/pixel-town.jar
+COPY --from=build /src/target/laya-pixel-town-*.jar /app/laya-pixel-town.jar
 EXPOSE 8765
 HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=5 \
   CMD ["bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8765 && printf 'GET /api/defaults HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q ' 200' <&3"]
-ENTRYPOINT ["java", "-jar", "/app/pixel-town.jar"]
+ENTRYPOINT ["java", "-jar", "/app/laya-pixel-town.jar"]

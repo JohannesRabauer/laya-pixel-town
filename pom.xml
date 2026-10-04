@@ -11,9 +11,9 @@
     </parent>
 
     <groupId>dev.rabauer</groupId>
-    <artifactId>pixel-town</artifactId>
+    <artifactId>laya-pixel-town</artifactId>
     <version>0.1.0-SNAPSHOT</version>
-    <name>pixel-town</name>
+    <name>laya-pixel-town</name>
     <description>A pixel town where every decision is made by Laya</description>
 
     <properties>

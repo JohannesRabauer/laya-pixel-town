@@ -1,11 +1,11 @@
-package dev.rabauer.pixeltown;
+package dev.rabauer.laya_pixel_town;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PixelTownApplication {
+public class LayaPixelTownApplication {
     public static void main(String[] args) {
-        SpringApplication.run(PixelTownApplication.class, args);
+        SpringApplication.run(LayaPixelTownApplication.class, args);
     }
 }

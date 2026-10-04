@@ -1,7 +1,7 @@
-package dev.rabauer.pixeltown;
+package dev.rabauer.laya_pixel_town;
 
-import dev.rabauer.pixeltown.Person.Activity;
-import dev.rabauer.pixeltown.Person.Decision;
+import dev.rabauer.laya_pixel_town.Person.Activity;
+import dev.rabauer.laya_pixel_town.Person.Decision;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

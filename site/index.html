@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laya Pixel Town</title>
+<meta name="description" content="A pixel-art town of a hundred people where every decision is made by Laya, an open-source decision engine. Watch, pause, and see exactly why each person chose what they did.">
+<meta property="og:title" content="Laya Pixel Town">
+<meta property="og:description" content="A hundred tiny people. Every decision made by Laya, in milliseconds. Click anyone to see why.">
+<meta property="og:image" content="assets/screenshot-inspector.png">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#14161F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 20' shape-rendering='crispEdges'%3E%3Crect x='2' y='0' width='8' height='8' fill='%23F1C9A0'/%3E%3Crect x='2' y='0' width='8' height='3' fill='%233A2A20'/%3E%3Crect x='0' y='8' width='12' height='8' fill='%23FFC857'/%3E%3Crect x='2' y='16' width='3' height='4' fill='%233A3F55'/%3E%3Crect x='7' y='16' width='3' height='4' fill='%233A3F55'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Silkscreen&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="#top" aria-label="Laya Pixel Town, back to top">
+    <span class="brand-sprite" aria-hidden="true"></span>
+    <span class="pix">Laya Pixel Town</span>
+  </a>
+  <nav aria-label="Sections">
+    <a href="#how">How it works</a>
+    <a href="#speed">Speed</a>
+    <a href="#learned">Lessons</a>
+    <a href="#start">Run it</a>
+    <a class="btn ghost small" href="https://github.com/JohannesRabauer/laya-pixel-town">GitHub</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <canvas id="walkers" aria-hidden="true"></canvas>
+    <div class="hero-inner">
+      <p class="eyebrow pix">A Laya showcase</p>
+      <h1>A hundred tiny lives.<br><span class="amber">Every decision made by Laya.</span></h1>
+      <p class="lead">A pixel town where people eat, sleep, work, meet friends and wander. Nobody scripted them. Each choice is a real answer from <a href="https://github.com/NandhaKishorM/laya">Laya</a>, an open-source decision engine. Click anyone to see exactly why they chose what they did.</p>
+      <div class="cta">
+        <a class="btn primary" href="#start">Run it in one command</a>
+        <a class="btn ghost" href="https://github.com/JohannesRabauer/laya-pixel-town">View on GitHub</a>
+      </div>
+      <dl class="stats">
+        <div><dt>about</dt><dd class="pix">70 ms</dd><dt>per warm batch on a laptop GPU</dt></div>
+        <div><dt>up to</dt><dd class="pix">64</dd><dt>people decided in one call</dt></div>
+        <div><dt>exactly</dt><dd class="pix">0</dd><dt>scripted or faked answers</dt></div>
+      </dl>
+    </div>
+    <div class="hero-shot"><figure class="shot">
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>localhost:8765</span></div>
+      <img src="assets/screenshot-town.png" width="1400" height="850" alt="The running town seen from above: houses, a restaurant, a shop, workplaces and parks, with dozens of tiny people walking along paths and the road. The top bar shows live decisions per second, batch size and batch time.">
+    </figure></div>
+  </section>
+
+  <!-- WHY -->
+  <section class="band" aria-labelledby="why-title">
+    <div class="wrap two">
+      <div>
+        <h2 id="why-title">Watching is the product</h2>
+        <p>There is no player, no score and nothing to win. You are an observer, a little like a god looking at an ant farm. You can pause time, step forward one decision at a time, speed the day up, and open any person to look inside their head.</p>
+        <p>The point is to <em>see</em> decision-making happen: dozens of people choosing at once, each choice backed by real probabilities and a real latency in milliseconds.</p>
+      </div>
+      <ul class="feature-list">
+        <li><span class="dot" style="--c:#E8743B"></span><b>Five needs</b> per person: hunger, energy, social, fun and money.</li>
+        <li><span class="dot" style="--c:#B58CF0"></span><b>Seven activities</b> to choose from: sleep, eat, work, socialize, relax, shop, wander.</li>
+        <li><span class="dot" style="--c:#5B8DEF"></span><b>Day and night.</b> At night the town goes to bed on its own, because tired people choose sleep.</li>
+        <li><span class="dot" style="--c:#5CC38A"></span><b>Live numbers</b> in the top bar: decisions per second, batch size, batch time.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- INSPECTOR -->
+  <section class="wrap feature" aria-labelledby="insp-title">
+    <figure class="shot">
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>localhost:8765</span></div>
+      <img src="assets/screenshot-inspector.png" width="1400" height="850" alt="One person selected with a white ring. The inspector panel on the right lists her needs as coloured bars, the exact sentence sent to Laya, a probability bar for each of the seven activities with the chosen one outlined in amber, the decision time in milliseconds, and her recent decision history.">
+    </figure>
+    <div class="copy">
+      <p class="eyebrow pix amber">The inspector</p>
+      <h2 id="insp-title">Every decision, explained</h2>
+      <p>Click a person and the inspector opens. Nothing is hidden:</p>
+      <ol class="checks">
+        <li>their needs, live</li>
+        <li>the exact sentence the app sent to Laya</li>
+        <li>Laya's probability for each of the seven options</li>
+        <li>which option won, and how long the call took</li>
+        <li>their last ten decisions</li>
+      </ol>
+      <div class="quote mono">“Maya has no money left and needs to earn some. Maya is a bit tired. Other needs are fine.”<br><span class="amber">→ work 0.96</span></div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how" class="band" aria-labelledby="how-title">
+    <div class="wrap">
+      <p class="eyebrow pix">How it works</p>
+      <h2 id="how-title">From need to footsteps in four steps</h2>
+      <ol class="steps">
+        <li>
+          <span class="num pix">1</span>
+          <h3>Needs drift</h3>
+          <p>A Java simulation runs the town. Hunger rises, energy falls, money runs out. Activities restore what they fix.</p>
+        </li>
+        <li>
+          <span class="num pix">2</span>
+          <h3>One sentence each</h3>
+          <p>Everyone due for a decision becomes one short sentence that names their strongest needs, in plain words.</p>
+        </li>
+        <li>
+          <span class="num pix">3</span>
+          <h3>One batch call</h3>
+          <p>Up to 64 sentences go to Laya's batch endpoint at once. Laya answers each with a choice and a probability per option.</p>
+        </li>
+        <li>
+          <span class="num pix">4</span>
+          <h3>They walk</h3>
+          <p>Each person walks to the right place: home, work, the restaurant, the shop or the park. Your browser draws it at ten updates per second.</p>
+        </li>
+      </ol>
+      <pre class="code mono" aria-label="Example request to Laya"><span class="c">POST /v1/systemone/batch</span>
+{
+  <span class="k">"states"</span>: [<span class="s">"Maya is starving. Other needs are fine."</span>, <span class="s">"…"</span>],
+  <span class="k">"questions"</span>: { <span class="k">"next"</span>: {
+    <span class="k">"type"</span>: <span class="s">"choice"</span>,
+    <span class="k">"instructions"</span>: <span class="s">"Choose what this person most needs to do right now."</span>,
+    <span class="k">"criteria"</span>: { <span class="k">"sleep"</span>: <span class="s">"…"</span>, <span class="k">"eat"</span>: <span class="s">"…"</span>, <span class="k">"work"</span>: <span class="s">"…"</span>, <span class="c">…</span> }
+  }}
+}</pre>
+    </div>
+  </section>
+
+  <!-- SPEED -->
+  <section id="speed" class="wrap" aria-labelledby="speed-title">
+    <p class="eyebrow pix">Speed</p>
+    <h2 id="speed-title">Real numbers, from a laptop</h2>
+    <p class="sub">Measured with an RTX 3060 laptop GPU (6 GB) and Laya's English checkpoint. 64 people decided in a single call:</p>
+    <div class="bars" role="img" aria-label="Time for one call with 64 people: CPU about 46 seconds, GPU about 2.7 seconds.">
+      <div class="bar-row">
+        <span class="bar-label">CPU</span>
+        <div class="bar-track"><div class="bar-fill cpu" style="--w:100%"></div></div>
+        <span class="bar-val pix">46 s</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">GPU</span>
+        <div class="bar-track"><div class="bar-fill gpu" style="--w:5.9%"></div></div>
+        <span class="bar-val pix amber">2.7 s</span>
+      </div>
+    </div>
+    <div class="cards three">
+      <div class="card"><b class="pix amber">17×</b><p>faster per batch on the GPU than on the CPU.</p></div>
+      <div class="card"><b class="pix amber">~70 ms</b><p>for a small warm batch, which is what the running town mostly sends.</p></div>
+      <div class="card"><b class="pix amber">Honest</b><p>The app measures every call. If Laya is slow, you see it. If Laya is down, people just carry on.</p></div>
+    </div>
+  </section>
+
+  <!-- LEARNED -->
+  <section id="learned" class="band" aria-labelledby="learned-title">
+    <div class="wrap">
+      <p class="eyebrow pix">Lessons</p>
+      <h2 id="learned-title">What we learned about talking to Laya</h2>
+      <p class="sub">Laya is a fast classifier, not a chatbot. The words you send decide a lot.</p>
+      <div class="cards three">
+        <div class="card">
+          <h3>Don't say what they're doing</h3>
+          <p>With “Right now Maya is relaxing” in the text, Laya chose <em>relax</em> for all 100 people, at 0.99. Mentioning the current activity anchors the answer.</p>
+        </div>
+        <div class="card">
+          <h3>Needs first, plainly</h3>
+          <p>“Maya is starving. Other needs are fine.” Strongest need first, everyday words. This scored best in our checks.</p>
+        </div>
+        <div class="card">
+          <h3>Time only at night</h3>
+          <p>Daytime phrases pulled answers toward <em>relax</em>. Saying “It is the middle of the night” is still useful: tired people go to bed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- START -->
+  <section id="start" class="wrap start" aria-labelledby="start-title">
+    <p class="eyebrow pix">Run it</p>
+    <h2 id="start-title">One command</h2>
+    <p class="sub">You need Docker. With an NVIDIA GPU:</p>
+    <div class="cmd">
+      <pre class="mono"><code id="cmd-gpu">docker compose up --build</code></pre>
+      <button class="btn ghost small copy" data-copy="cmd-gpu">Copy</button>
+    </div>
+    <p>Then open <a href="http://localhost:8765">localhost:8765</a> and press <b>Start</b>. The first run builds Laya from source and downloads its model, so give it a few minutes.</p>
+    <p class="muted">No NVIDIA GPU? It still works, just slower:</p>
+    <div class="cmd">
+      <pre class="mono"><code id="cmd-cpu">docker compose -f compose.yaml -f compose.cpu.yaml up --build</code></pre>
+      <button class="btn ghost small copy" data-copy="cmd-cpu">Copy</button>
+    </div>
+    <div class="cta center">
+      <a class="btn primary" href="https://github.com/JohannesRabauer/laya-pixel-town">Get the code</a>
+      <a class="btn ghost" href="https://github.com/NandhaKishorM/laya">Learn about Laya</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap foot">
+    <span class="pix">Laya Pixel Town</span>
+    <span class="muted">Built with Java, Spring Boot and a canvas. Decisions by <a href="https://github.com/NandhaKishorM/laya">Laya</a> (Apache-2.0).</span>
+  </div>
+</footer>
+
+<script src="site.js"></script>
+</body>
+</html>

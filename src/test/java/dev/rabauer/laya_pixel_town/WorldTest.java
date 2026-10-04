@@ -1,4 +1,4 @@
-package dev.rabauer.pixeltown;
+package dev.rabauer.laya_pixel_town;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

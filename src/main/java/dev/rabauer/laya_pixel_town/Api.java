@@ -1,4 +1,4 @@
-package dev.rabauer.pixeltown;
+package dev.rabauer.laya_pixel_town;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;

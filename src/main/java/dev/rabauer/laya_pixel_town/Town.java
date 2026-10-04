@@ -1,4 +1,4 @@
-package dev.rabauer.pixeltown;
+package dev.rabauer.laya_pixel_town;
 
 import java.util.ArrayList;
 import java.util.List;

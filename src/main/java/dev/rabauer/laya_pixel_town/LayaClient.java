@@ -31,7 +31,9 @@ public class LayaClient {
     private static final String INSTRUCTIONS = "Choose what this person most needs to do right now, given their needs.";
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
+    // HTTP/1.1 on purpose: the default HTTP/2 client adds "Upgrade: h2c" to cleartext requests, and uvicorn
+    // answers every one of them with "Unsupported upgrade request" plus a missing-WebSocket-library warning.
+    private final HttpClient http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(3)).build();
     private final String baseUrl;
 
     public LayaClient(String baseUrl) {

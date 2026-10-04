@@ -155,19 +155,22 @@ public class World {
             case RELAX -> pl = rnd.nextBoolean() ? p.home : null;
             default -> pl = null;
         }
+        boolean pond = false;
         if (pl != null) {
             dest = new double[]{pl.doorX(), pl.doorY()};
         } else {
             building = false;
-            dest = (a == Activity.WANDER) ? town.wanderSpot(rnd) : town.parkSpot(rnd);
+            pond = (a == Activity.RELAX || a == Activity.SOCIALIZE) && rnd.nextInt(3) == 0;
+            dest = a == Activity.WANDER ? town.wanderSpot(rnd) : pond ? town.pondSpot(rnd) : town.parkSpot(rnd);
         }
+        String outdoors = pond ? "At the pond" : "At the park";
         p.placeLabel = switch (a) {
             case SLEEP -> "At home";
             case EAT -> "At the restaurant";
             case WORK -> "At work";
             case SHOP -> "At the shop";
-            case RELAX -> building ? "At home" : "At the park";
-            case SOCIALIZE -> "At the park";
+            case RELAX -> building ? "At home" : outdoors;
+            case SOCIALIZE -> outdoors;
             case WANDER -> "Out walking";
         };
         p.destInside = building;
@@ -248,9 +251,12 @@ public class World {
     // ---- state text ----
     String stateText(Person p, double now) {
         record Need(double severity, String phrase) {}
+        boolean night = timePhrase(now).contains("night");
+        // At night people feel sleepier than their energy says, so tiredness leads their needs.
+        double tired = Math.min(100, 100 - p.energy + (night ? 40 : 0));
         List<Need> needs = new ArrayList<>(List.of(
                 new Need(p.hunger, p.hunger >= 80 ? "is starving" : p.hunger >= 60 ? "is very hungry" : "is a little hungry"),
-                new Need(100 - p.energy, 100 - p.energy >= 80 ? "is exhausted and very sleepy" : 100 - p.energy >= 60 ? "is tired" : "is a bit tired"),
+                new Need(tired, tired >= 80 ? "is exhausted and very sleepy" : tired >= 60 ? "is tired" : "is a bit tired"),
                 new Need(100 - p.social, 100 - p.social >= 80 ? "feels very lonely and wants company" : 100 - p.social >= 60 ? "feels lonely" : "would like some company"),
                 new Need(100 - p.fun, 100 - p.fun >= 80 ? "is bored to death" : 100 - p.fun >= 60 ? "is bored and wants some fun" : "could use some fun"),
                 new Need(100 - p.money, 100 - p.money >= 80 ? "has no money left and needs to earn some" : 100 - p.money >= 60 ? "is short of money" : "has little money")));
@@ -264,10 +270,12 @@ public class World {
         }
         if (shown == 0) sb.append(p.name).append(" feels fine: fed, rested and content. ");
         else sb.append("Other needs are fine. ");
+        // Nothing in the needs above points to the shop, so Laya never picked it. Spare money does.
+        if (p.money >= 65) sb.append(p.name).append(" has money to spend. ");
         // Laya anchors on the current activity and on daytime phrases (it answered "relax" for everyone),
         // so the state names needs only, and the time of day only when it is night.
         String time = timePhrase(now);
-        if (time.contains("night")) sb.append("It is ").append(time).append('.');
+        if (night) sb.append("It is ").append(time).append(", dark outside and time for bed.");
         return sb.toString();
     }
 

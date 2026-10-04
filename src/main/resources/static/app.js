@@ -7,10 +7,11 @@ const SKIN = ['#F1C9A0', '#D9A474', '#B97A4E', '#8A5A3A'];
 const CLOTH = ['#E85D5D', '#4C7BD9', '#F2C14E', '#59B36B', '#9B6BD6', '#E88A3D', '#3FB2B2', '#D9D9E2'];
 const HAIR = ['#3A2A20', '#1E1E26', '#C9A25A', '#8A4A2A'];
 const ROOF = {home: ['#A64B4B', '#8A3C3C'], restaurant: ['#C8963E', '#A87A2C'], shop: ['#3E9B7A', '#2E7A5E'], work: ['#6F7380', '#565A66']};
+const PLACE_NAME = {home: 'Home', restaurant: 'Restaurant', shop: 'Shop', work: 'Workplace'};
 
 const $ = id => document.getElementById(id);
 const canvas = $('town'), ctx = canvas.getContext('2d');
-let mapData = null, base = null;
+let mapData = null, base = null, lamps = [];
 let snap = {running: false};
 let people = [];              // {id, x, y, tx, ty, act, inside, moving, tone}
 let selected = -1, hoverId = -1;
@@ -40,6 +41,15 @@ function buildBase(map) {
     rect(b.x * T + 4, b.y * T + 4, b.w * T - 8, b.h * T - 8, c1);
     rect(b.x * T + b.w * T / 2 - 5, (b.y + b.h) * T - 6, 10, 6, '#3A2A20');
   });
+  lamps = [];
+  for (let x = 3; x < map.w - 2; x += 8) { if (Math.abs(x - 39.5) > 3) { lamps.push([x, 21.7]); lamps.push([x + 4, 25.4]); } }
+  for (let y = 3; y < map.h - 2; y += 8) { if (Math.abs(y - 23.5) > 4) { lamps.push([37.6, y]); lamps.push([41.4, y + 4]); } }
+  lamps.forEach(([lx, ly]) => { rect(lx * T - 1, ly * T - 11, 2, 11, '#2A2D3A'); rect(lx * T - 3, ly * T - 14, 6, 4, '#FFE9A8'); });
+  g.font = 'bold 9px monospace'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  const label = (text, cx, y) => { g.fillStyle = '#14161F'; g.fillText(text, cx + 1, y + 1); g.fillStyle = '#F4F4F8'; g.fillText(text, cx, y); };
+  map.buildings.forEach(b => label(PLACE_NAME[b.type], (b.x + b.w / 2) * T, b.y * T - 3));
+  label('Pond', 8.5 * T, 9.6 * T);
+  label('Park', 19 * T, 34.7 * T); label('Park', 61 * T, 34.7 * T);
   for (let i = 0; i < 26; i++) { const x = (46 + Math.floor(R() * 30)) * T, y = (35 + Math.floor(R() * 10)) * T; rect(x, y, 22, 22, '#3F7432'); rect(x + 3, y + 3, 16, 16, '#4E8A3E'); }
   for (let i = 0; i < 18; i++) { const x = (2 + Math.floor(R() * 32)) * T, y = (35 + Math.floor(R() * 10)) * T; rect(x, y, 22, 22, '#3F7432'); rect(x + 3, y + 3, 16, 16, '#4E8A3E'); }
   return c;
@@ -98,10 +108,23 @@ function draw(t) {
   if (!base) return;
   ctx.drawImage(base, panX, panY, base.width * zoom, base.height * zoom);
   const na = snap.running ? nightAlpha(snap.minute) : 0;
-  if (na > 0) { ctx.fillStyle = 'rgba(27,35,71,' + na + ')'; ctx.fillRect(panX, panY, base.width * zoom, base.height * zoom); }
   const order = people.filter(q => !q.inside).sort((a, b) => a.y - b.y);
   for (const q of people) { const dx = q.tx - q.x, dy = q.ty - q.y; q.moving = Math.abs(dx) + Math.abs(dy) > 0.02; q.x += dx * 0.35; q.y += dy * 0.35; }
   for (const q of order) drawPerson(q, t);
+  if (na > 0) {
+    // the night tint covers the people too; light sources are added on top of it
+    ctx.fillStyle = 'rgba(27,35,71,' + na + ')'; ctx.fillRect(panX, panY, base.width * zoom, base.height * zoom);
+    const glow = na / 0.55, prev = ctx.globalCompositeOperation;
+    ctx.globalCompositeOperation = 'lighter';
+    const spot = (sx, sy, rad, a) => {
+      const gr = ctx.createRadialGradient(sx, sy, 0, sx, sy, rad);
+      gr.addColorStop(0, 'rgba(255,205,120,' + a + ')'); gr.addColorStop(1, 'rgba(255,205,120,0)');
+      ctx.fillStyle = gr; ctx.fillRect(sx - rad, sy - rad, rad * 2, rad * 2);
+    };
+    for (const [lx, ly] of lamps) { const [sx, sy] = toScreen(lx, ly - 0.7); spot(sx, sy, 5.5 * T * zoom, 0.5 * glow); }
+    for (const q of order) { const [sx, sy] = toScreen(q.x, q.y); spot(sx, sy - 9 * zoom, 2.6 * T * zoom, 0.3 * glow); }
+    ctx.globalCompositeOperation = prev;
+  }
   if (selected >= 0 && people[selected]) {
     const q = people[selected];
     const [sx, sy] = toScreen(q.x, q.y);

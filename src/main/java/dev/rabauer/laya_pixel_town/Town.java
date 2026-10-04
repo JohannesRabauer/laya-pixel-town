@@ -57,6 +57,11 @@ public final class Town {
         return new double[]{x, 33.8};
     }
 
+    /** A random spot on the grass just below the pond (top left). */
+    public double[] pondSpot(Random rnd) {
+        return new double[]{3.5 + rnd.nextDouble() * 10, 11.6};
+    }
+
     /** A random spot on one of the walkways. */
     public double[] wanderSpot(Random rnd) {
         double lane = LANES[rnd.nextInt(LANES.length)];

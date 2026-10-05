@@ -18,8 +18,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class World {
     static final double SIM_MIN_PER_SECOND = 6.0;   // at 1x one simulated day lasts four real minutes
-    static final double WALK_TILES_PER_MIN = 0.5;
+    static final double WALK_TILES_PER_MIN = 1.0;
     static final double TICK_SECONDS = 0.1;
+    private static final int GROUP_MAX = 6;
     private static final String[] NAMES = {"Maya", "Tom", "Ann", "Bo", "Cy", "Dee", "Eli", "Fay", "Gus", "Hana", "Ivo", "Jo",
             "Kai", "Lena", "Max", "Nia", "Omar", "Pia", "Quinn", "Rosa", "Sam", "Tess", "Uma", "Vic", "Wes", "Xena", "Yan",
             "Zoe", "Abe", "Bea", "Carl", "Dora", "Ed", "Flo", "Gil", "Hugo", "Ida", "Jin", "Kit", "Lou", "Mia", "Ned",
@@ -96,11 +97,11 @@ public class World {
     }
 
     private void update(Person p, double dt) {
-        p.hunger += 0.12 * dt;
+        p.hunger += 0.08 * dt;
         p.energy -= 0.07 * dt;
-        p.social -= 0.12 * dt;
+        p.social -= 0.10 * dt;
         p.fun -= 0.08 * dt;
-        p.money -= 0.02 * dt;
+        p.money -= 0.01 * dt;
 
         if (!p.route.isEmpty()) {
             double budget = WALK_TILES_PER_MIN * dt;
@@ -138,16 +139,16 @@ public class World {
             switch (p.activity) {
                 case SLEEP -> { p.energy += 0.3 * dt; p.hunger -= 0.06 * dt; }
                 case EAT -> {   // a meal is paid for: without money the restaurant serves nothing
-                    if (p.money > 0) { p.hunger -= 1.5 * dt; p.money -= 0.4 * dt; }
+                    if (p.money > 0) { p.hunger -= 1.5 * dt; p.money -= 0.15 * dt; }
                 }
-                case WORK -> { p.money += 0.25 * dt; p.energy -= 0.05 * dt; p.fun -= 0.05 * dt; }
+                case WORK -> { p.money += 0.5 * dt; p.energy -= 0.05 * dt; p.fun -= 0.05 * dt; }
                 case SOCIALIZE -> {   // company is what helps: alone at the meeting spot it barely does
                     boolean company = isChatting(p, people);
                     p.social += (company ? 0.8 : 0.25) * dt;
                     p.fun += (company ? 0.1 : 0.03) * dt;
                 }
                 case RELAX -> { p.fun += 0.7 * dt; p.energy += 0.02 * dt; }
-                case SHOP -> { if (p.money > 0) { p.money -= 0.4 * dt; p.fun += 0.3 * dt; } }
+                case SHOP -> { if (p.money > 0) { p.money -= 0.3 * dt; p.fun += 0.3 * dt; } }
                 case WANDER -> { p.fun += 0.2 * dt; p.energy -= 0.03 * dt; }
             }
         }
@@ -177,11 +178,18 @@ public class World {
             dest = new double[]{pl.doorX(), pl.doorY()};
         } else if (a == Activity.SOCIALIZE) {
             building = false;
-            // Head for where another person is already meeting, so groups form; the first one picks a spot at random.
+            // Head for a group that is already meeting, so people find company; groups stop growing at GROUP_MAX,
+            // and the first one, or anyone who finds every group full, picks a meeting spot at random.
             Person partner = null;
             int seen = 0;
             for (Person o : people) {
-                if (o != p && o.activity == Activity.SOCIALIZE && o.area != null && rnd.nextInt(++seen) == 0) partner = o;
+                if (o == p || o.activity != Activity.SOCIALIZE || o.area == null) continue;
+                int group = 0;
+                for (Person q : people) {
+                    if (q != p && q.activity == Activity.SOCIALIZE && q.area != null
+                            && Math.hypot(q.destX - o.destX, q.destY - o.destY) < 3) group++;
+                }
+                if (group < GROUP_MAX && rnd.nextInt(++seen) == 0) partner = o;
             }
             if (partner == null) {
                 pond = rnd.nextInt(3) == 0;
@@ -350,7 +358,7 @@ public class World {
         if (shown == 0) sb.append(p.name).append(" feels fine: fed, rested and content. ");
         else sb.append("Other needs are fine. ");
         // Nothing in the needs above points to the shop, so Laya never picked it. Spare money does.
-        if (p.money >= 65) sb.append(p.name).append(" has money to spend. ");
+        if (p.money >= 55) sb.append(p.name).append(" has plenty of money and wants to buy something nice. ");
         // Laya anchors on the current activity and on daytime phrases (it answered "relax" for everyone),
         // so the state names needs only, and the time of day only when it is night.
         String time = timePhrase(now);

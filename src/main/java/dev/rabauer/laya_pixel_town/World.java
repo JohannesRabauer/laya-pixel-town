@@ -175,13 +175,28 @@ public class World {
         boolean pond = false;
         if (pl != null) {
             dest = new double[]{pl.doorX(), pl.doorY()};
+        } else if (a == Activity.SOCIALIZE) {
+            building = false;
+            // Head for where another person is already meeting, so groups form; the first one picks a spot at random.
+            Person partner = null;
+            int seen = 0;
+            for (Person o : people) {
+                if (o != p && o.activity == Activity.SOCIALIZE && o.area != null && rnd.nextInt(++seen) == 0) partner = o;
+            }
+            if (partner == null) {
+                pond = rnd.nextInt(3) == 0;
+                dest = town.socialSpot(pond, rnd);
+            } else {
+                pond = partner.area.equals("pond");
+                dest = town.nearSocialSpot(pond, partner.destX, partner.destY, rnd);
+            }
         } else {
             building = false;
-            pond = (a == Activity.RELAX || a == Activity.SOCIALIZE) && rnd.nextInt(3) == 0;
-            dest = a == Activity.WANDER ? town.wanderSpot(rnd)
-                    : a == Activity.SOCIALIZE ? town.socialSpot(pond, rnd)
-                    : pond ? town.pondSpot(rnd) : town.parkSpot(rnd);
+            pond = a == Activity.RELAX && rnd.nextInt(3) == 0;
+            dest = a == Activity.WANDER ? town.wanderSpot(rnd) : pond ? town.pondSpot(rnd) : town.parkSpot(rnd);
         }
+        p.destX = dest[0];
+        p.destY = dest[1];
         p.area = building || a == Activity.WANDER ? null : pond ? "pond" : "park";
         p.nextStrollAt = simMinute + rnd.nextDouble() * 10;
         String outdoors = pond ? "At the pond" : "At the park";
@@ -272,10 +287,15 @@ public class World {
         Decision d = new Decision(simMinute, state, a.probabilities(), choice, a.answerConfidence(), res.wallMs(), size);
         p.record(d);
         boolean sameActivity = chosen == p.activity;
-        // Answering "relax", "socialize" or "wander" again once there is not "stay put": it picks a new home, park or
-        // pond spot, otherwise everyone Laya keeps telling to relax would stay in the house they started in.
-        // Someone still walking to the last spot is left alone, the trips are long.
-        boolean roams = p.arrived && (chosen == Activity.RELAX || chosen == Activity.SOCIALIZE || chosen == Activity.WANDER);
+        // Answering the same thing again is not always "stay put". Someone relaxing at home gets another go at the park
+        // or pond, a wanderer a new spot, a socializer left alone moves to where people are meeting. Someone already
+        // enjoying a park, the pond or company stays: walking between spots earns nothing, and the trips are long.
+        boolean roams = p.arrived && switch (chosen) {
+            case RELAX -> p.area == null;
+            case SOCIALIZE -> !isChatting(p, people);
+            case WANDER -> true;
+            default -> false;
+        };
         if (!sameActivity || roams) {
             if (!sameActivity) p.activityStartedAt = simMinute;
             p.activity = chosen;

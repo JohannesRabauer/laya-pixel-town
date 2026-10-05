@@ -116,6 +116,14 @@ public final class Town {
         return new double[]{nx, ny};
     }
 
+    /** A spot close to (x, y), in the same park or at the same pond, for joining a group that meets there. */
+    public double[] nearSocialSpot(boolean pond, double x, double y, Random rnd) {
+        double jx = (rnd.nextDouble() * 2 - 1) * 1.5, jy = (rnd.nextDouble() * 2 - 1) * 1.2;
+        if (pond) return new double[]{Math.max(2, Math.min(15, x + jx)), RING[0][1]};
+        double lo = x < VERTICAL_LANE_X ? 4 : 46, hi = x < VERTICAL_LANE_X ? 34 : 74;
+        return new double[]{Math.max(lo, Math.min(hi, x + jx)), Math.max(34, Math.min(45, y + jy))};
+    }
+
     /** Where people who want company meet: a few fixed gathering points per park and at the pond, so they end up close together. */
     public double[] socialSpot(boolean pond, Random rnd) {
         if (pond) return new double[]{5 + rnd.nextDouble() * 6, RING[0][1]};

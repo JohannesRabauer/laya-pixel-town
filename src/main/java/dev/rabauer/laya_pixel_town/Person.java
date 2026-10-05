@@ -54,6 +54,7 @@ public class Person {
     boolean inFlight;
     String area;                // "pond" or "park" while relaxing or socializing outdoors, otherwise null
     double nextStrollAt;
+    double destX, destY;        // where the current walk is headed
 
     Decision lastDecision;
     final Deque<Decision> history = new ArrayDeque<>();

@@ -76,7 +76,7 @@ class WorldTest {
 
     @Test
     void socializersMeetOutsideStrollAndChat() throws Exception {
-        socializersOrRelaxers("socialize", 5, 10);
+        socializersOrRelaxers("socialize", 5, 24);
     }
 
     private void socializersOrRelaxers(String choice, int minMoved, int minChatting) throws Exception {

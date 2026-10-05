@@ -39,6 +39,8 @@ public class Person {
     public final String name;
     public final Town.Place home;
     public final Town.Place workplace;
+    /** Minutes this person is ahead of or behind the town clock when it comes to night: early bird or night owl. */
+    final double sleepShift;
 
     public double x, y;
     public boolean inside;
@@ -64,6 +66,7 @@ public class Person {
         this.name = name;
         this.home = home;
         this.workplace = workplace;
+        this.sleepShift = (rnd.nextDouble() * 2 - 1) * 120;
         this.x = home.doorX();
         this.y = home.doorY();
         this.inside = true;

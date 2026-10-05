@@ -325,7 +325,7 @@ public class World {
     /** True when the need this activity serves is already full, so carrying on would be pointless. */
     private boolean satisfied(Person p, Activity a) {
         return switch (a) {
-            case SLEEP -> p.energy >= 95 && !timePhrase(simMinute).contains("night");
+            case SLEEP -> p.energy >= 95 && !timePhrase(simMinute + p.sleepShift).contains("night");
             case EAT -> p.hunger <= 5 || p.money <= 0;
             case WORK -> p.money >= 95;
             case SOCIALIZE -> p.social >= 95;
@@ -338,7 +338,9 @@ public class World {
     // ---- state text ----
     String stateText(Person p, double now) {
         record Need(double severity, String phrase) {}
-        boolean night = timePhrase(now).contains("night");
+        // Everyone has their own bedtime and wake-up time, up to two hours either side, so the town does not wake as one.
+        double local = now + p.sleepShift;
+        boolean night = timePhrase(local).contains("night");
         // At night people feel sleepier than their energy says, so tiredness leads their needs.
         double tired = Math.min(100, 100 - p.energy + (night ? 40 : 0));
         List<Need> needs = new ArrayList<>(List.of(
@@ -361,7 +363,7 @@ public class World {
         if (p.money >= 55) sb.append(p.name).append(" has plenty of money and wants to buy something nice. ");
         // Laya anchors on the current activity and on daytime phrases (it answered "relax" for everyone),
         // so the state names needs only, and the time of day only when it is night.
-        String time = timePhrase(now);
+        String time = timePhrase(local);
         if (night) sb.append("It is ").append(time).append(", dark outside and time for bed.");
         return sb.toString();
     }
